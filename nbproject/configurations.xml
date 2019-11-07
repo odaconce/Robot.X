@@ -14,6 +14,7 @@
                    projectFiles="true">
       <itemPath>LineTracking.c</itemPath>
       <itemPath>AutoLineTracking.c</itemPath>
+      <itemPath>Controller.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

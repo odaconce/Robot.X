@@ -134,25 +134,58 @@ void AutoArm (void){
     
 }
 //ADC pins to be sampled (AN0)
-void ADC (void){                                   
-                                    //12-bit sampling
-                                    //Use dedicated ADC RC oscillator
-                                    //Automatically start new conversion after previous
-                                    //Use Avdd and Avss as reference levels
-	OpenADC1(ADC_MODULE_OFF & ADC_AD12B_12BIT & ADC_FORMAT_INTG & ADC_CLK_AUTO & ADC_AUTO_SAMPLING_ON,
-                ADC_VREF_AVDD_AVSS & ADC_SCAN_OFF & ADC_ALT_INPUT_OFF,
-		ADC_SAMPLE_TIME_31 & ADC_CONV_CLK_INTERNAL_RC,
-		ADC_DMA_BUF_LOC_1,
-		ENABLE_AN4_ANA,
-		0,		
-		0,
-		0);
-                                    //Select AN4
-	SetChanADC1(0, ADC_CH0_NEG_SAMPLEA_VREFN & ADC_CH0_POS_SAMPLEA_AN4);
-	AD1CON1bits.ADON = 1;           //Turn on ADC hardware module
-	while (AD1CON1bits.DONE == 0);	//Wait until conversion is done
-	Photocell = ReadADC1(0);        //Photocell = converted results
-	AD1CON1bits.ADON = 0;           //Turn off ADC hardware module
+void ADC (void){ 
+    //ADC's to read if in manual drive
+    if (ControlState == 1){                               
+        OpenADC1(ADC_MODULE_OFF & ADC_AD12B_12BIT & ADC_FORMAT_INTG & ADC_CLK_AUTO & ADC_AUTO_SAMPLING_ON,
+                    ADC_VREF_AVDD_AVSS & ADC_SCAN_OFF & ADC_ALT_INPUT_OFF,
+            ADC_SAMPLE_TIME_31 & ADC_CONV_CLK_INTERNAL_RC,
+            ADC_DMA_BUF_LOC_1,
+            ENABLE_AN4_ANA,
+            0,		
+            0,
+            0);
+                                        //Select AN4
+        SetChanADC1(0, ADC_CH0_NEG_SAMPLEA_VREFN & ADC_CH0_POS_SAMPLEA_AN4);
+        AD1CON1bits.ADON = 1;           //Turn on ADC hardware module
+        while (AD1CON1bits.DONE == 0);	//Wait until conversion is done
+        Photocell = ReadADC1(0);        //Photocell = converted results
+        AD1CON1bits.ADON = 0;           //Turn off ADC hardware module
+    }
+    //ADC's to read if in line tracking auto mode
+    else if (ControlState == 0){
+        //ADC for left line sensor
+        OpenADC1(ADC_MODULE_OFF & ADC_AD12B_12BIT & ADC_FORMAT_INTG & ADC_CLK_AUTO & ADC_AUTO_SAMPLING_ON,
+                    ADC_VREF_AVDD_AVSS & ADC_SCAN_OFF & ADC_ALT_INPUT_OFF,
+            ADC_SAMPLE_TIME_31 & ADC_CONV_CLK_INTERNAL_RC,
+            ADC_DMA_BUF_LOC_1,
+            ENABLE_AN12_ANA,
+            0,		
+            0,
+            0);
+                                        //Select AN4
+        SetChanADC1(0, ADC_CH0_NEG_SAMPLEA_VREFN & ADC_CH0_POS_SAMPLEA_AN12);
+        AD1CON1bits.ADON = 1;           //Turn on ADC hardware module
+        while (AD1CON1bits.DONE == 0);	//Wait until conversion is done
+        LineLeft = ReadADC1(0);        //Photocell = converted results
+        AD1CON1bits.ADON = 0;           //Turn off ADC hardware module
+        
+        //ADC for right line sensor 
+        OpenADC1(ADC_MODULE_OFF & ADC_AD12B_12BIT & ADC_FORMAT_INTG & ADC_CLK_AUTO & ADC_AUTO_SAMPLING_ON,
+                    ADC_VREF_AVDD_AVSS & ADC_SCAN_OFF & ADC_ALT_INPUT_OFF,
+            ADC_SAMPLE_TIME_31 & ADC_CONV_CLK_INTERNAL_RC,
+            ADC_DMA_BUF_LOC_1,
+            ENABLE_AN14_ANA,
+            0,		
+            0,
+            0);
+                                        //Select AN4
+        SetChanADC1(0, ADC_CH0_NEG_SAMPLEA_VREFN & ADC_CH0_POS_SAMPLEA_AN14);
+        AD1CON1bits.ADON = 1;           //Turn on ADC hardware module
+        while (AD1CON1bits.DONE == 0);	//Wait until conversion is done
+        LineRight = ReadADC1(0);        //Photocell = converted results
+        AD1CON1bits.ADON = 0;           //Turn off ADC hardware module
+    }
 }
 //Data to be received from the controller
 void ProcessData(void){	
@@ -161,10 +194,13 @@ void ProcessData(void){
 
 	ONTimeReceived = (ReceiveDataArray[1] << 8) + ReceiveDataArray[2];  //Build integer from array of bytes
 	ONTimeReceived = Map(ONTimeReceived,0,4095,SERVO_MIN,SERVO_MAX);    //Make sure the RC Servo Motor values are within its limits
-    ONTime = ONTimeReceived;   //This is to ensure the interrupt handler does not use a value of ONTime that has not yet been fully calculated. Reduces twitching in RC Servo Motor.
+    ONTimeR = ONTimeReceived;   //This is to ensure the interrupt handler does not use a value of ONTime that has not yet been fully calculated. Reduces twitching in RC Servo Motor.
+    ONTimeReceived = (ReceiveDataArray[3] << 8) + ReceiveDataArray[4];  //Build integer from array of bytes
+	ONTimeReceived = Map(ONTimeReceived,0,4095,SERVO_MIN,SERVO_MAX);    //Make sure the RC Servo Motor values are within its limits
+    ONTimeL = ONTimeReceived;   //This is to ensure the interrupt handler
     
-    DriveState = (ReceiveDataArray[3]); 
-    ControlState = (ReceiveDataArray[4]);
+    DriveState = (ReceiveDataArray[5]); 
+    ControlState = (ReceiveDataArray[6]);
     
     SendDataArray[20] = 1;                  //Sending a 1 for controller to check for communication
     Communicating = ReceiveDataArray[20];   //Checking if the controller sent us a 1, which will let us know if we

@@ -1,0 +1,11 @@
+Robot IO Notes
+
+Inputs
+	Analog for arm position (Pot)
+	Analog for mnagetic field sensor (Hall effect)
+Outputs
+	PWM for left drive motor (Vex DC)
+	PWM for right drive motor (Vex DC)
+	PWM for arm joint (Servo)
+	PWM for Gripper motor (Micro Servo)
+	RX and TX for coms

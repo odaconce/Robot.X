@@ -1,0 +1,13 @@
+Controller IO Notes
+
+Inputs
+	Analog input for left speed (Pot)
+	Analog input for right speed (Pot)
+	Analog input for arm position (Pot)
+	digital input for control state (Toggle Switch)
+	2 digital inputs for gripper movement (2 Buttons)
+Outputs
+	RX and TX for commmunications
+	LED for communication 
+	LED for power
+	LED for magnetic cube
